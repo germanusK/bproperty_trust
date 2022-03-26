@@ -15,4 +15,6 @@ class Customer extends Model
         'email',
         'contact'
     ];
+
+    
 }

@@ -46,9 +46,9 @@ class Property extends Controller
             // store or move images
             foreach ( $request->file('images') as $file) {
                 # code...
-                $name = Strings::normalize(base64_encode($request->getClientIp()).time().pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME).random_int(100000, 999999).'.'.$file->getClientOriginalExtension());
+                $name = Strings::normalize(base64_encode($request->getClientIp()).time().random_int(100000, 999999).'.'.$file->getClientOriginalExtension());
                 $file->move(storage_path().'/uploads/images', $name);
-                array_push($images_array, str_replace("\\", "", URL::to('/').'/api/uploads/images/'.$name, ));
+                array_push($images_array, str_replace("\\", "", '/api/uploads/images/'.$name, ));
             }
     
             $data = $request->all();
@@ -56,8 +56,14 @@ class Property extends Controller
     
             $instance = new PropertyModel();
             $instance->fill($data);
-            if($instance->save())
+            if($instance->save()){
+                $instance->images = json_decode($instance->images);
+                foreach ($instance->images as $key => $value) {
+                    # code...
+                    $value = URL::to('/').$value;
+                }
                 return $instance;
+            }
             return response('Failure saving data. Try again later.', 405);
         // } catch (\Throwable $th) {
         //     response($th->__toString());
@@ -66,18 +72,60 @@ class Property extends Controller
 
     // read all property instances
     function get(){
-        return DB::table('property')->get();
+        $data = DB::table('property')->get()->shuffle();
+        foreach ($data as $key => $value) {
+            # code...
+            // $value->images = json_decode(str_replace(["\\", "\""], "", $value->images));
+            $value->images = json_decode($value->images);
+            foreach ($value->images as $key1 => $value1) {
+                # code...
+                $value->images[$key1] = URL::to('/').$value->images[$key1];
+            }
+
+        }
+        return $data;
     }
 
     // read by id
     function getById(Request $request){
-        return DB::table('property')->find($request->id);
+        $data = DB::table('property')->find($request->id);
+       
+        $data->images = json_decode($data->images);
+        foreach ($data->images as $key => $value) {
+            # code...
+            $data->images[$key] = URL::to('/').$data->images[$key];
+        }
+        return $data;
     }
 
 
     // load image
-    function getImahge(Request $request){
-        return file(storage_path().'/uploads/images/'.$request->file_name);
+    function getImage(Request $request){
+        // return "found image here";
+        return response()->file(storage_path().'/uploads/images/'.$request->file_name);
+    }
+
+    // get latest trending property
+    function getLatestTrending(){
+        $data = DB::table('property')->orderByDesc('grade')->orderByDesc('created_at');
+        if (count($data->get())>=50) {
+            # code...
+            $data = $data->take(50);
+        }
+
+        $data = $data->inRandomOrder()->get();
+
+        foreach ($data as $key => $value) {
+            # code...
+            // $value->images = json_decode(str_replace(["\\", "\""], "", $value->images));
+            $value->images = json_decode($value->images);
+            foreach ($value->images as $key1 => $value1) {
+                # code...
+                $value->images[$key1] = URL::to('/').$value->images[$key1];
+            }
+
+        }
+        return $data;
     }
 
     // custom read query
@@ -88,7 +136,18 @@ class Property extends Controller
             # code...
             $querybuilder = $querybuilder->where($key, '=', $value);
         }
-        return $querybuilder->get();
+        $data = $querybuilder->get();
+        foreach ($data as $key => $value) {
+            # code...
+            // $value->images = json_decode(str_replace(["\\", "\""], "", $value->images));
+            $value->images = json_decode($value->images);
+            foreach ($value->images as $key1 => $value1) {
+                # code...
+                $value->images[$key1] = URL::to('/').$value->images[$key1];
+            }
+
+        }
+        return $data;
     }
 
     // get count for all

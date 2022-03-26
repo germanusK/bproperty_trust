@@ -22,7 +22,4 @@ class Controller extends BaseController
         }
     }
 
-    function configureMail(Request $request){
-        
-    }
 }

@@ -3,20 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Property as PropertyModel;
-use Error;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Nette\Utils\Strings;
-use Prophecy\Util\StringUtil;
-use Symfony\Component\Console\Input\Input;
-use Symfony\Component\HttpFoundation\File\File;
-use Symfony\Component\HttpFoundation\File\UploadedFile as FileUploadedFile;
-use Symfony\Component\HttpFoundation\FileBag;
-use Symfony\Component\Mime\Encoder\Base64Encoder;
+
 
 class Property extends Controller
 {
@@ -48,7 +42,7 @@ class Property extends Controller
                 # code...
                 $name = Strings::normalize(base64_encode($request->getClientIp()).time().random_int(100000, 999999).'.'.$file->getClientOriginalExtension());
                 $file->move(storage_path().'/uploads/images', $name);
-                array_push($images_array, str_replace("\\", "", '/api/uploads/images/'.$name, ));
+                array_push($images_array, str_replace("\\", "", '/uploads/images/'.$name, ));
             }
     
             $data = $request->all();
@@ -60,14 +54,12 @@ class Property extends Controller
                 $instance->images = json_decode($instance->images);
                 foreach ($instance->images as $key => $value) {
                     # code...
-                    $value = URL::to('/').$value;
+                    $instance->images[$key] = URL::to('/').'/api'.$instance->images[$key];
                 }
                 return $instance;
             }
             return response('Failure saving data. Try again later.', 405);
-        // } catch (\Throwable $th) {
-        //     response($th->__toString());
-        // }
+        
     }
 
     // read all property instances
@@ -79,7 +71,7 @@ class Property extends Controller
             $value->images = json_decode($value->images);
             foreach ($value->images as $key1 => $value1) {
                 # code...
-                $value->images[$key1] = URL::to('/').$value->images[$key1];
+                $value->images[$key1] = URL::to('/').'/api'.$value->images[$key1];
             }
 
         }
@@ -93,7 +85,7 @@ class Property extends Controller
         $data->images = json_decode($data->images);
         foreach ($data->images as $key => $value) {
             # code...
-            $data->images[$key] = URL::to('/').$data->images[$key];
+            $data->images[$key] = URL::to('/').'/api'.$data->images[$key];
         }
         return $data;
     }
@@ -121,17 +113,34 @@ class Property extends Controller
             $value->images = json_decode($value->images);
             foreach ($value->images as $key1 => $value1) {
                 # code...
-                $value->images[$key1] = URL::to('/').$value->images[$key1];
+                $value->images[$key1] = URL::to('/').'/api'.$value->images[$key1];
             }
 
         }
         return $data;
     }
 
+    // get related property
+    function getRelatedProperty(Request $request){
+        $check = DB::table('property')->where('id', '=', $request->id)->get(['group', 'category', 'grade']);
+        if ($check->isNotEmpty()) {
+            # code...
+            $data = DB::table('property')->where('group', '=', $check->group)
+                    ->where('category', '=', $check->category)
+                    ->where('grade', '=', $check->grade);
+    
+            if ($data->exists()) {
+                # code...
+                
+            }
+        }
+    }
+
     // custom read query
     function customGet(Request $request){
-        $query_params = $request->query;
+        $query_params = $request->query->all();
         $querybuilder = DB::table('property');
+        Log::alert($query_params);
         foreach ($query_params as $key => $value) {
             # code...
             $querybuilder = $querybuilder->where($key, '=', $value);
@@ -143,7 +152,30 @@ class Property extends Controller
             $value->images = json_decode($value->images);
             foreach ($value->images as $key1 => $value1) {
                 # code...
-                $value->images[$key1] = URL::to('/').$value->images[$key1];
+                $value->images[$key1] = URL::to('/').'/api'.$value->images[$key1];
+            }
+
+        }
+        return $data;
+    }
+
+    function genericLatest(Request $request){
+        $query_params = $request->query->all();
+        $querybuilder = DB::table('property');
+        Log::alert($query_params);
+        foreach ($query_params as $key => $value) {
+            # code...
+            $querybuilder = $querybuilder->where($key, '=', $value);
+        }
+        $querybuilder = $querybuilder->orderByDesc('grade')->orderByDesc('created_at');
+        $data = $querybuilder->get();
+        foreach ($data as $key => $value) {
+            # code...
+            // $value->images = json_decode(str_replace(["\\", "\""], "", $value->images));
+            $value->images = json_decode($value->images);
+            foreach ($value->images as $key1 => $value1) {
+                # code...
+                $value->images[$key1] = URL::to('/').'/api'.$value->images[$key1];
             }
 
         }
@@ -182,8 +214,13 @@ class Property extends Controller
             return $validator->errors()->getMessages();
 
         $instance = DB::table('property')->find($request->id);
-        if($instance->update($request->all()))
+        if($instance->update($request->all())){
+            foreach ($$instance->images as $key => $value) {
+                # code...
+                $value = URL::to('/').'/api'.$value;
+            }
             return $instance;
+        }
         return response('Failure updating item. Try again later.', 405);
     }
 
@@ -203,7 +240,12 @@ class Property extends Controller
 
     // delete item by id
     function delete(Request $request){
-        DB::table('property')->delete($request->id);
+        $builder = DB::table('property')->where('id', '=', $request->id);
+        if ($builder->exists()) {
+            # code...
+            Storage::delete(json_decode($builder->get('images')));
+        }
+        $builder->delete();
     }
 
 }

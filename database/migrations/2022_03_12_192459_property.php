@@ -16,10 +16,7 @@ class Property extends Migration
      * @return void
      */
     public function up()
-    {
-
-        $images = DB::table('property')->get('images');
-        
+    {        
 
         //
         Schema::create("property", function(Blueprint $table){
@@ -35,16 +32,6 @@ class Property extends Migration
             $table->timestamp("created_at")->useCurrent();//time stamp on which the asset was uplaoded
             $table->timestamp("updated_at")->useCurrent();
         });
-
-        if( is_countable($images))
-        foreach ($images as $key => $value) {
-            # code...
-            $value = json_decode($value);
-            foreach ($value as $key => $value1) {
-                # code...
-                Storage::delete($value1);
-            }
-        }
     }
 
     /**

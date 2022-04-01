@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post("/properties", [Property::class, 'store']);
 Route::get('/properties/latestTrending', [Property::class, 'getLatestTrending']);
+Route::get('/properties/genericLatest', [Property::class, 'genericLatest']);
 Route::get("/properties/some/count", [Property::class, 'customCount']);
 Route::get("/properties/some", [Property::class, 'customGet']);
 Route::get("/properties/count", [Property::class, 'countAll']);

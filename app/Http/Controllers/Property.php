@@ -122,17 +122,27 @@ class Property extends Controller
 
     // get related property
     function getRelatedProperty(Request $request){
-        $check = DB::table('property')->where('id', '=', $request->id)->get(['group', 'category', 'grade']);
+        $check = DB::table('property')->where('id', '=', $request->id)->get();
+        
         if ($check->isNotEmpty()) {
             # code...
-            $data = DB::table('property')->where('group', '=', $check->group)
-                    ->where('category', '=', $check->category)
-                    ->where('grade', '=', $check->grade);
-    
-            if ($data->exists()) {
+            $data = DB::table('property')->where('group', '=', $check[0]->group)
+                    ->where('category', '=', $check[0]->category)
+                    ->where('grade', '=', $check[0]->grade)
+                    ->where('id', '!=', $request->id)
+                    ->get();
+
+            foreach ($data as $key => $value) {
                 # code...
-                
+                // $value->images = json_decode(str_replace(["\\", "\""], "", $value->images));
+                $value->images = json_decode($value->images);
+                foreach ($value->images as $key1 => $value1) {
+                    # code...
+                    $value->images[$key1] = URL::to('/').'/api'.$value->images[$key1];
+                }
+    
             }
+            return $data;
         }
     }
 
@@ -140,7 +150,6 @@ class Property extends Controller
     function customGet(Request $request){
         $query_params = $request->query->all();
         $querybuilder = DB::table('property');
-        Log::alert($query_params);
         foreach ($query_params as $key => $value) {
             # code...
             $querybuilder = $querybuilder->where($key, '=', $value);
@@ -189,13 +198,14 @@ class Property extends Controller
 
     // get item count for particular item group
     function customCount(Request $request){
-        $query_params = $request->query();
+        $query_params = $request->query->all();
         $querybuilder = DB::table('property');
         foreach ($query_params as $key => $value) {
             # code...
-            @$querybuilder = $querybuilder->where($key, '=', $value);
+            $querybuilder = $querybuilder->where($key, '=', $value);
         }
-        return count($querybuilder->get());
+        $data = $querybuilder->get();
+        return count($data);
     }
 
     function update(Request $request){

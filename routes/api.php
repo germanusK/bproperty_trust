@@ -28,6 +28,7 @@ Route::get('/properties/latestTrending', [Property::class, 'getLatestTrending'])
 Route::get('/properties/genericLatest', [Property::class, 'genericLatest']);
 Route::get("/properties/some/count", [Property::class, 'customCount']);
 Route::get("/properties/some", [Property::class, 'customGet']);
+Route::get("/properties/related/{id}", [Property::class, 'getRelatedProperty']);
 Route::get("/properties/count", [Property::class, 'countAll']);
 Route::get("/properties/{id}", [Property::class, 'getById']);
 Route::get("/properties", [Property::class, 'get']);

@@ -23,7 +23,7 @@ class Property extends Migration
             $table->engine = "InnoDB";
             $table->id();
             $table->string("name");
-            $table->enum("group", ["RE", "GC"]);//whether real estate or general commerce item
+            $table->enum("group", ["RE", "GC", "ARCH", "CONS"]);//whether real estate or general commerce item
             $table->string("category"); //say electronics, cloth, wearables, house|land|etc
             $table->string("description")->nullable(); //concise description of the item e.g house properties and facilities.
             $table->text("images");//will have to store >=1 image of the item

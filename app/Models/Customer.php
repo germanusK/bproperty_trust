@@ -16,5 +16,13 @@ class Customer extends Model
         'contact'
     ];
 
+    protected $table = "customers";
+
+    function order(){
+        return $this->hasMany('App\Models\Message', 'placed_id');
+    }
+    function schedule(){
+        return $this->hasMany('App\Models\Schedule', 'customer_id');
+    }
     
 }

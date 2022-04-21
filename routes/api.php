@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Controller;
 use App\Http\Controllers\Customer;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\Order;
@@ -36,7 +37,7 @@ Route::put("/properties/{id}", [Property::class, 'update']);
 Route::patch("/properties/{id}", [Property::class, 'patch']);
 Route::delete("/properties/{id}", [Property::class, 'delete']);
 Route::get("/uploads/images/{file_name}", [Property::class, 'getImage']);
-Route::post("/notification/mail", [MailController::class, 'notify']);
+Route::post("/notification/recipient", [MailController::class, 'notify']);
 
 
 
@@ -65,13 +66,38 @@ Route::delete("/customers/{id}", [Customer::class, 'delete']);
 
 
 
+// MESSAGES
+Route::post("/messages", [Order::class, 'store']);
+Route::get("/messages/some/count", [Order::class, 'customCount']);
+Route::get("/messages/some", [Order::class, 'customGet']);
+Route::get("/messages/count", [Order::class, 'countAll']);
+Route::get("/messages/{id}", [Order::class, 'getById']);
+Route::get("/messages", [Order::class, 'get']);
+Route::put("/messages/{id}", [Order::class, 'update']);
+Route::patch("/messages/{id}", [Order::class, 'patch']);
+Route::delete("/messages/{id}", [Order::class, 'delete']);
 
-Route::post("/orders", [Order::class, 'store']);
-Route::get("/orders/some/count", [Order::class, 'customCount']);
-Route::get("/orders/some", [Order::class, 'customGet']);
-Route::get("/orders/count", [Order::class, 'countAll']);
-Route::get("/orders/{id}", [Order::class, 'getById']);
-Route::get("/orders", [Order::class, 'get']);
-Route::put("/orders/{id}", [Order::class, 'update']);
-Route::patch("/orders/{id}", [Order::class, 'patch']);
-Route::delete("/orders/{id}", [Order::class, 'delete']);
+
+
+
+// Groups
+Route::post('/groups', [Controller::class, 'createGroup']);
+Route::get('/groups', [Controller::class, 'getGroups']);
+Route::put('/groups/{id}', [Controller::class, 'updateGroup']);
+Route::delete('/groups/{id}', [Controller::class, 'deleteGroup']);
+// Categories
+Route::post('/categories', [Controller::class, 'createCategory']);
+Route::get('/categories/{group}', [Controller::class, 'getCategoriesByGroup']);
+Route::get('/categories', [Controller::class, 'getCategories']);
+Route::put('/categories/{id}', [Controller::class, 'updateCategory']);
+Route::delete('/categories/{id}', [Controller::class, 'deleteCategory']);
+// Grades
+Route::post('/grades', [Controller::class, 'createGrade']);
+Route::get('/grades', [Controller::class, 'getGrades']);
+Route::put('/grades/{id}', [Controller::class, 'updateGrade']);
+Route::delete('/grades/{id}', [Controller::class, 'deleteGrade']);
+
+
+
+// SEARCH
+Route::get('/search/seachParams', [Controller::class, 'search']);

@@ -15,13 +15,14 @@ class Order extends Migration
     public function up()
     {
         // this model is going to be applicable for a search without the 'description' and 'placed_by' fields
-        Schema::create("order", function(Blueprint $table){
+        Schema::create("messages", function(Blueprint $table){
             $table->engine = "InnoDB";
             $table->id();
-            $table->string("category");
-            $table->timestamp("created_on")->useCurrent();
+            $table->string('type');
             $table->string("description"); //concise description of expected item
             $table->unsignedBigInteger("placed_by"); //the id of the customer placing the order.
+            $table->foreign('placed_by')->references('id')->on('customers')->onUpdate('cascade');
+            $table->timestamp("created_on")->useCurrent();
             $table->enum("status", ["pending", "acheived"])->default("pending");//if order is pending or achieved
         });
     }

@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\AssetCategory;
+use App\Models\AssetGrade;
+use App\Models\AssetGroup;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -19,15 +22,16 @@ class Property extends Migration
     {        
 
         //
-        Schema::create("property", function(Blueprint $table){
+        Schema::create("properties", function(Blueprint $table){
             $table->engine = "InnoDB";
             $table->id();
             $table->string("name");
-            $table->enum("group", ["RE", "GC", "ARCH", "CONS"]);//whether real estate or general commerce item
-            $table->string("category"); //say electronics, cloth, wearables, house|land|etc
             $table->string("description")->nullable(); //concise description of the item e.g house properties and facilities.
-            $table->text("images");//will have to store >=1 image of the item
-            $table->string("grade");//give the item a grade that boosts its priority to be presented on site.
+            $table->json("images");//will have to store >=1 image of the item
+            $table->unsignedBigInteger("category"); //say electronics, cloth, wearables, house|land|etc
+            $table->foreign('category')->references('id')->on('asset_categories')->onUpdate('cascade');
+            $table->unsignedBigInteger("grade");//give the item a grade that boosts its priority to be presented on site.
+            $table->foreign('grade')->references('id')->on('asset_grades')->onUpdate('cascade');
             $table->string("price");//price per item.
             $table->timestamp("created_at")->useCurrent();//time stamp on which the asset was uplaoded
             $table->timestamp("updated_at")->useCurrent();

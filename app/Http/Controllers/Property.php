@@ -19,44 +19,43 @@ class Property extends Controller
     function store(Request $request){
         // try {
             //code...
+            return $request->data;
             $validator = Validator::make($request->all(),
                 [
                     'name'=>'required',
-                    'group'=>'required',
                     'category'=>'required',
-                    'images'=>'required|array',
+                    'price'=>'required',
                     'grade'=>'required',
-                    'price'=>'required'
+                    'images'=>'required',
+                    'images[*]'=>'mimes:jpg,png,jpeg,gif'
                 ]
-                );
-            $image_validator = Validator::make($request->all()['images'], ['image'=>'mimes:jpg,png,jpeg,gif']);
-    
-            if($validator->fails())
-                return $validator->errors()->getMessages();
-            if($image_validator->fails())
-                return $image_validator->errors()->getMessages();
-            
+                );    
+            if($validator->fails()){
+                return $validator->errors()->getMessages();}
             $images_array = [];
             // store or move images
-            foreach ( $request->file('images') as $file) {
+            foreach ( $request->images as $key=>$file) {
                 # code...
                 $name = Strings::normalize(base64_encode($request->getClientIp()).time().random_int(100000, 999999).'.'.$file->getClientOriginalExtension());
                 $file->move(storage_path().'/uploads/images', $name);
                 array_push($images_array, str_replace("\\", "", '/uploads/images/'.$name, ));
             }
-    
+            
             $data = $request->all();
             $data['images'] = json_encode($images_array);
-    
+            
             $instance = new PropertyModel();
             $instance->fill($data);
             if($instance->save()){
+                $arr = array();
                 $instance->images = json_decode($instance->images);
+
                 foreach ($instance->images as $key => $value) {
                     # code...
-                    $instance->images[$key] = URL::to('/').'/api'.$instance->images[$key];
+                    $arr[] = URL::to('/').'/api'.$value;
                 }
-                return $instance;
+                $instance->images = $arr;
+                return response($instance);
             }
             return response('Failure saving data. Try again later.', 405);
         
@@ -64,7 +63,7 @@ class Property extends Controller
 
     // read all property instances
     function get(){
-        $data = DB::table('property')->get()->shuffle();
+        $data = DB::table('properties')->get()->shuffle();
         foreach ($data as $key => $value) {
             # code...
             // $value->images = json_decode(str_replace(["\\", "\""], "", $value->images));
@@ -80,7 +79,7 @@ class Property extends Controller
 
     // read by id
     function getById(Request $request){
-        $data = DB::table('property')->find($request->id);
+        $data = DB::table('properties')->find($request->id);
        
         $data->images = json_decode($data->images);
         foreach ($data->images as $key => $value) {
@@ -99,7 +98,7 @@ class Property extends Controller
 
     // get latest trending property
     function getLatestTrending(){
-        $data = DB::table('property')->orderByDesc('grade')->orderByDesc('created_at');
+        $data = DB::table('properties')->orderByDesc('grade')->orderByDesc('created_at');
         if (count($data->get())>=50) {
             # code...
             $data = $data->take(50);
@@ -122,11 +121,11 @@ class Property extends Controller
 
     // get related property
     function getRelatedProperty(Request $request){
-        $check = DB::table('property')->where('id', '=', $request->id)->get();
+        $check = DB::table('properties')->where('id', '=', $request->id)->get();
         
         if ($check->isNotEmpty()) {
             # code...
-            $data = DB::table('property')->where('group', '=', $check[0]->group)
+            $data = DB::table('properties')->where('group', '=', $check[0]->group)
                     ->where('category', '=', $check[0]->category)
                     ->where('grade', '=', $check[0]->grade)
                     ->where('id', '!=', $request->id)
@@ -149,7 +148,7 @@ class Property extends Controller
     // custom read query
     function customGet(Request $request){
         $query_params = $request->query->all();
-        $querybuilder = DB::table('property');
+        $querybuilder = DB::table('properties');
         foreach ($query_params as $key => $value) {
             # code...
             $querybuilder = $querybuilder->where($key, '=', $value);
@@ -170,7 +169,7 @@ class Property extends Controller
 
     function genericLatest(Request $request){
         $query_params = $request->query->all();
-        $querybuilder = DB::table('property');
+        $querybuilder = DB::table('properties');
         Log::alert($query_params);
         foreach ($query_params as $key => $value) {
             # code...
@@ -193,13 +192,13 @@ class Property extends Controller
 
     // get count for all
     function countAll(){
-        return count(DB::table('property')->get());
+        return count(DB::table('properties')->get());
     }
 
     // get item count for particular item group
     function customCount(Request $request){
         $query_params = $request->query->all();
-        $querybuilder = DB::table('property');
+        $querybuilder = DB::table('properties');
         foreach ($query_params as $key => $value) {
             # code...
             $querybuilder = $querybuilder->where($key, '=', $value);
@@ -212,7 +211,6 @@ class Property extends Controller
         $validator = Validator::make($request->all(),
             [
                 'name'=>'required',
-                'group'=>'required',
                 'category'=>'required',
                 'images'=>'required',
                 'grade'=>'required',
@@ -223,7 +221,7 @@ class Property extends Controller
         if($validator->fails())
             return $validator->errors()->getMessages();
 
-        $instance = DB::table('property')->find($request->id);
+        $instance = DB::table('properties')->find($request->id);
         if($instance->update($request->all())){
             foreach ($$instance->images as $key => $value) {
                 # code...
@@ -250,12 +248,14 @@ class Property extends Controller
 
     // delete item by id
     function delete(Request $request){
-        $builder = DB::table('property')->where('id', '=', $request->id);
-        if ($builder->exists()) {
+        $data = DB::table('properties')->where('id', '=', $request->id)->get(); 
+        foreach ($data as $key => $value) {
             # code...
-            Storage::delete(json_decode($builder->get('images')));
+            Storage::delete(json_decode($value->images));
+            DB::table('properties')->delete($value->id);
         }
-        $builder->delete();
+        
+        return response($data);
     }
 
 }

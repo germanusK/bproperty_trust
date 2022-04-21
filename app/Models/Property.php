@@ -13,7 +13,6 @@ class Property extends Model
 
     protected $fillable = [
         'name',
-        'group',
         'category',
         'description',
         'images',
@@ -26,6 +25,18 @@ class Property extends Model
         'updated_at'=>'datetime'
     ];
 
-    protected $table = "property";
+    protected $table = "properties";
+
+    function asset_category(){
+        return $this->belongsTo('App\Models\AssetCategory', 'category');
+    }
+
+    function schedule(){
+        return $this->hasMany('App\Models\Schedule', 'asset_id');
+    }
+
+    function asset_grade(){
+        return $this->belongsTo('App\Models\AssetGrade', 'grade');
+    }
 }
 // 679542286

@@ -15,8 +15,16 @@ class Schedule extends Model
         'customer_id',
         'due_date',
         'status',
-        'validated'
+        'verified'
     ];
 
+    protected $table = 'schedules';
+
+    function property(){
+        return $this->belongsTo('App\Models\Property', 'asset_id');
+    }
+    function customer(){
+        return $this->belongsTo('App\Models\Customer', 'customer_id');
+    }
     
 }

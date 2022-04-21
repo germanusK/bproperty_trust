@@ -14,16 +14,18 @@ class Schedule extends Migration
     public function up()
     {
         //
-        Schema::create("schedule", function(Blueprint $table){
+        Schema::create("schedules", function(Blueprint $table){
             $table->engine = "InnoDB";
             $table->id();
             $table->unsignedBigInteger("asset_id");//id of the asset to which the schedule/visit has to do with
-            $table->timestamp("due-date")->useCurrent();
             $table->unsignedBigInteger("customer_id");
-            $table->string("status")->default("pending");//pending or echieved
-            $table->timestamp("creation_time")->useCurrent();
-            $table->timestamp("last_update_time")->useCurrent();
-            $table->boolean("validated")->default(false);//updated by the user(not customer) to true when booking/schedule fee is payed, for a schedule to be treated with priority.
+            $table->foreign('asset_id')->references('id')->on('properties')->onUpdate('cascade');
+            $table->foreign('customer_id')->references('id')->on('customers')->onUpdate('cascade');
+            $table->timestamp("due-date");
+            $table->enum("status", ['pending', 'acheived'])->default("pending");//pending or echieved
+            $table->timestamp("created_at")->useCurrent();
+            $table->timestamp("updated_at")->useCurrent();
+            $table->boolean("verified")->default(false);//updated by the user(not customer) to true when booking/schedule fee is payed, for a schedule to be treated with priority.
         });
     }
 
